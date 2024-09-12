@@ -6,7 +6,12 @@ ifeq ($(strip $(DEVKITARM)),)
 $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path to>devkitARM")
 endif
 
+# path to picex lib
+export LIBPICEX :=$(abspath $(TOPDIR)./../picex)
+
 include $(DEVKITARM)/ds_rules
+include $(LIBPICEX)/tools/picex_module_rules
+
 
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
@@ -41,14 +46,14 @@ LDFLAGS	=	-specs=ds_arm9.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project (order is important)
 #---------------------------------------------------------------------------------
-LIBS	:= 	-lfilesystem -lfat -lnds9
+LIBS	:= -lpicex -lfilesystem -lfat -lnds9
  
  
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:=	$(LIBNDS)
+LIBDIRS	:= $(LIBPICEX)	$(LIBNDS)
  
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
@@ -56,6 +61,7 @@ LIBDIRS	:=	$(LIBNDS)
 #---------------------------------------------------------------------------------
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
+
 export TOPDIR	:=	$(CURDIR)
 
 export OUTPUT	:=	$(CURDIR)/$(TARGET)
@@ -97,6 +103,10 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 			-I$(CURDIR)/$(BUILD)
  
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+
+export PICEX_MODULES := $(shell find $(TOPDIR)/pic_modules -name "*.picex")
+export PICEX_OUT := $(PICEX_MODULES:.picex=.pic.bin)
+export PICEX_NITRO := $(shell echo $(PICEX_OUT) | sed -E "s/pic_modules\/(.*)\/module.pic.bin/nitro\/pix\/\1/")
  
 .PHONY: $(BUILD) clean
  
@@ -107,18 +117,29 @@ $(BUILD):
  
 #---------------------------------------------------------------------------------
 clean:
-	@echo clean ...
-	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).nds
+	@echo clean ...	
+	@rm -fr $(BUILD) $(TARGET).elf $(TARGET).nds	
+	@for file in "$(PICEX_OUT)"; do [ ! -e $${file} ] || rm $${file}; done
+
 
 #---------------------------------------------------------------------------------
 else
+
+$(info $(PICEX_MODULES))
+$(info $(PICEX_OUT))
  
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
 $(OUTPUT).nds	: 	$(OUTPUT).elf
 $(OUTPUT).nds	: 	$(shell find $(TOPDIR)/$(NITRO))
-$(OUTPUT).elf	:	$(OFILES)
+$(OUTPUT).elf	:	$(OFILES) $(PICEX_NITRO)
+
+$(PICEX_NITRO) : $(PICEX_OUT)
+	@echo NITRO $^ $@
+	mkdir -p $(dir $@) && cp $^ $@
+
+$(PICEX_OUT)    : $(PICEX_MODULES)
  
 #---------------------------------------------------------------------------------
 %.bin.o	:	%.bin

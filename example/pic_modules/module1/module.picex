@@ -1,0 +1,17 @@
+MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
+
+TARGET    := $(MAKEFILE_DIR)/module.pic.bin
+SOURCES   := $(shell find $(MAKEFILE_DIR)/source -name "*.c")
+LINKER_LD := $(LIBPICEX)/tools/pic_linker.ld
+
+FLAGS        := -O2 -mthumb -march=armv5te -mtune=arm946e-s -fpic -ffreestanding -nostdlib -nostartfiles 
+LINKER_FLAGS := -Wl,-T$(LINKER_LD)
+
+OFILE     := $(MAKEFILE_DIR)/module.pic.o
+
+$(TARGET) : $(SOURCES)		
+	$(CC) $(SOURCES) $(FLAGS) $(LINKER_FLAGS) -o $(OFILE)
+	@$(OBJCOPY) -O binary $(OFILE) $(TARGET)
+	# @hexdump -C $(TARGET)
+	

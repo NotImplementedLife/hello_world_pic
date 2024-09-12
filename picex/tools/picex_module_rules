@@ -1,0 +1,4 @@
+%.pic.bin : %.picex	
+	@echo PIC $^
+	@[ ! -e $@ ] ||rm $@
+	@make LIBPICEX=$(LIBPICEX) -f $^
