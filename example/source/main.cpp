@@ -14,9 +14,9 @@ int main(void) {
 	if(!module) {
 		iprintf("Bad module\n");
 	}
-	else {	
+	else {
 		picex_run_entrypoint(module);
-	}	
+	}
 		
 	while(1) swiWaitForVBlank();
 	return 0;

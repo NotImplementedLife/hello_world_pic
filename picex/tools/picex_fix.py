@@ -23,6 +23,3 @@ with open(res_path, 'wb') as f:
     f.write(got_end.to_bytes(4, 'little'))
     f.write(len(binary).to_bytes(4, 'little'))
     f.write(binary)
-    
-
-print(binary)

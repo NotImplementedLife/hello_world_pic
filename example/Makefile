@@ -124,9 +124,6 @@ clean:
 
 #---------------------------------------------------------------------------------
 else
-
-$(info $(PICEX_MODULES))
-$(info $(PICEX_OUT))
  
 #---------------------------------------------------------------------------------
 # main targets
@@ -135,9 +132,8 @@ $(OUTPUT).nds	: 	$(OUTPUT).elf
 $(OUTPUT).nds	: 	$(shell find $(TOPDIR)/$(NITRO))
 $(OUTPUT).elf	:	$(OFILES) $(PICEX_NITRO)
 
-$(PICEX_NITRO) : $(PICEX_OUT)
-	@echo NITRO $^ $@
-	mkdir -p $(dir $@) && cp $^ $@
+$(PICEX_NITRO) : $(PICEX_OUT)	
+	@mkdir -p $(dir $@) && cp $^ $@
 
 $(PICEX_OUT)    : $(PICEX_MODULES)
  

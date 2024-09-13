@@ -18,19 +18,17 @@ BINFILE   := $(BUILDDIR)/module.bin
 READELF   := $(subst objcopy,readelf,$(OBJCOPY))
 
 $(TARGET) : $(SOURCES)		
-	mkdir -p $(BUILDDIR)
+	@mkdir -p $(BUILDDIR)
 	
-	$(CC) $(SOURCES) $(FLAGS) $(LINKER_FLAGS) -o $(OFILE)
+	@$(CC) $(SOURCES) $(FLAGS) $(LINKER_FLAGS) -o $(OFILE)
 	@$(OBJCOPY) -O binary $(OFILE) $(BINFILE)
 	@# hexdump -C $(BINFILE)
 	
 	@# get .got section offset & length
 	@$(READELF) -S $(OFILE) | grep -E ".got" | tr -s ' ' | cut -d ' ' -f 6,8 | sed -E "s/([^\s]+)\s([^\s]+)/got_start\=\1\ngot_length\=\2/" > $(INIFILE)
 	
-	python $(PICEX_FIX) $(BINFILE) $(INIFILE) $(TARGET)
+	@python $(PICEX_FIX) $(BINFILE) $(INIFILE) $(TARGET)
 	
-	@hexdump -C $(TARGET)
-	
-	@# cp $(BINFILE) $(TARGET)
+	@# hexdump -C $(TARGET)	
 	
 	
