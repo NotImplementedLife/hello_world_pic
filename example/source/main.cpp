@@ -1,8 +1,9 @@
 #include <nds.h>
 #include <filesystem.h>
 #include <stdio.h>
-#include <picex.h>
+#include <picex.h> // custom PIC Executor library
 
+// these functions are exported by the PIC module
 struct module_interface
 {
 	void (*loadf)(int (*)(const char*, ...));
@@ -17,12 +18,16 @@ int main(void) {
 	if(!module) {
 		iprintf("Bad module\n");
 	}
-	else {
-		const module_interface* mi = (const module_interface*)module->exports;
-		mi->loadf(iprintf);		
+	else {		
+		const module_interface* mi = (module_interface*)module->exports;
+		// make iprintf visible to the module
+		mi->loadf(iprintf);
+		// call a module function
 		int x = mi->sum(1,2);		
-		iprintf("%i\n", x);		
-		picex_run_entrypoint(module);						
+		iprintf("Result = %i\n", x);	
+		
+		// this will iprintf hello world...
+		picex_run_entrypoint(module); 		
 	}	
 	
 	while(1) swiWaitForVBlank();

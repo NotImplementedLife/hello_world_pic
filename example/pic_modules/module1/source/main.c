@@ -1,18 +1,13 @@
-short* BG0_SUB = ((short*)0x0620B002);
-
-void print_chars(const char* message)
-{    
-    while(*message) *BG0_SUB++ = 0xF000|*message++;
-}
 
 typedef int (*printf_t)(const char* format, ...);
+// pointer to external printf function
+// to be loaded later
+printf_t iprintf = 0; 
 
-printf_t iprintf = 0;
-
-void loadf(void* ptr) { iprintf = (printf_t)ptr; }
-
+void loadf(printf_t ptr) { iprintf = ptr; }
 int sum(int a, int b) { return a + b; }
 
+// default module execution path
 __attribute__((section(".text.entrypoint")))
 void _start()
 {	
@@ -20,6 +15,7 @@ void _start()
 		iprintf("Hello world from PIC module!");
 }
 
+// functions to export
 __attribute__((used))
 const void* exports[] = {	
 	loadf,
