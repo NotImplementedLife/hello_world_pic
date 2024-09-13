@@ -25,15 +25,26 @@ inside a module by casting a certain address to a C function pointer.
 
 ## Build
 
+This project needs devkitARM and libnds in order to be built.
+
 ```
 git clone https://github.com/NotImplementedLife/hello_world_pic
 cd hello_world_pic
-cd picex && make
+```
+
+Build the PICEx library:
+```
+cd ./picex 
+make
+```
+
+Then, build the example project:
+```
 cd ../example
 make
 ```
 
-Now you can run example.nds.
+Now you can run example.nds using an emulator.
 
 ![demo](README_Resources/demo.png)
 
@@ -43,5 +54,6 @@ Now you can run example.nds.
 - ✔️ Achieve simple PIC proof of concept
 - ✔️ Load/Unload module
 - ✔️ Ensure easy build with Makefiles
+- ✔️ The PIC module can export functions to the host program
 - ⌛ The PIC module can use host functions ("main API") like malloc
 - ⌛ The PIC module can use symbols from other PIC modules
