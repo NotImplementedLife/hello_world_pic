@@ -10,6 +10,14 @@ typedef void (*proc_t)();
 static const int PICEX_MAGIC = 0x78434950;
 #define is_magic_valid(x) ((x)==PICEX_MAGIC)
 
+typedef struct
+{
+	int magic;
+	int got_start, got_end;
+	int exports_start, exports_end;
+	int binary_length;
+} picex_header;
+
 picex_module* picex_load(const char* filename)
 {
 	const char* step = NULL;
@@ -19,38 +27,39 @@ picex_module* picex_load(const char* filename)
 	if(!f) 
 		goto error;			
 	
-	dbg_set_step(step, "picex: check magic");
-	int magic;		
-	if(!(fread(&magic, sizeof(int), 1, f) && is_magic_valid(magic))) 		
-	{
-		printf("%x\n", magic);
-		goto error;	
-	}
-	
 	dbg_set_step(step, "picex: read header");
-	int got_start, got_end, binary_length;
-	if (!( fread(&got_start, sizeof(int), 1, f) 
-		&& fread(&got_end, sizeof(int), 1, f)
-		&& fread(&binary_length, sizeof(int), 1, f)))
+	picex_header header;
+	if(!(fread(&header, sizeof(header), 1, f)))
+		goto error;	
+		
+	dbg_set_step(step, "picex: check magic");	
+	if(!is_magic_valid(header.magic))
 		goto error;
 	
 	dbg_set_step(step, "picex: bin alloc");	
-	picex_module* module  = (picex_module*)malloc(sizeof(picex_module) + binary_length);
+	picex_module* module  = (picex_module*)malloc(sizeof(picex_module) + header.binary_length);
 	if(!module) 
 		goto error;
 	    
 	dbg_set_step(step, "picex: bin read");	
-	if(!fread(module->binary, 1, binary_length, f))
+	if(!fread(module->binary, 1, header.binary_length, f))
 		goto error;
 		
     fclose(f);
 	
 	// fix got
-	int* got_start_offset = (int*)((char*)module->binary + got_start);
-	int* got_end_offset = (int*)((char*)module->binary + got_end);
+	int* got_start_offset = (int*)((char*)module->binary + header.got_start);
+	int* got_end_offset = (int*)((char*)module->binary + header.got_end);
 	for(int* offset=got_start_offset; offset!=got_end_offset; ++offset)
 		*offset += (int)module->binary;		
 	
+	// fix exports
+	int* exports_start_offset = (int*)((char*)module->binary + header.exports_start);
+	int* exports_end_offset = (int*)((char*)module->binary + header.exports_end);
+	for(int* offset=exports_start_offset; offset!=exports_end_offset; ++offset)
+		*offset += (int)module->binary;
+	
+	module->exports = exports_start_offset;	
     return module;	
 	
 error:	

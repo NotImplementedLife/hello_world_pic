@@ -8,6 +8,7 @@ extern "C" {
 
 typedef struct {
 	int header;	
+	void* exports;
 	char binary[];
 } picex_module;
 

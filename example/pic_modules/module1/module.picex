@@ -25,7 +25,10 @@ $(TARGET) : $(SOURCES)
 	@# hexdump -C $(BINFILE)
 	
 	@# get .got section offset & length
-	@$(READELF) -S $(OFILE) | grep -E ".got" | tr -s ' ' | cut -d ' ' -f 6,8 | sed -E "s/([^\s]+)\s([^\s]+)/got_start\=\1\ngot_length\=\2/" > $(INIFILE)
+	@$(READELF) -S $(OFILE) | grep -E ".got" | tr -s ' ' | cut -d ' ' -f 6,8 | sed -E "s/([^\s]+)\s([^\s]+)/got_start\=\1\ngot_length\=\2\n/" > $(INIFILE)
+	
+	@# get exports[] symbols
+	$(READELF) -s $(OFILE) | grep -E "exports" | tr -s ' ' | cut -d ' ' -f 3,4 | sed -E "s/([^\s]+)\s([^\s]+)/exports_start\=\1\nexports_length\=\2\n/" >> $(INIFILE)
 	
 	@python $(PICEX_FIX) $(BINFILE) $(INIFILE) $(TARGET)
 	
