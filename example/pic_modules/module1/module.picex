@@ -4,14 +4,33 @@ MAKEFILE_DIR := $(dir $(MAKEFILE_PATH))
 TARGET    := $(MAKEFILE_DIR)/module.pic.bin
 SOURCES   := $(shell find $(MAKEFILE_DIR)/source -name "*.c")
 LINKER_LD := $(LIBPICEX)/tools/pic_linker.ld
+PICEX_FIX := $(LIBPICEX)/tools/picex_fix.py
 
 FLAGS        := -O2 -mthumb -march=armv5te -mtune=arm946e-s -fpic -ffreestanding -nostdlib -nostartfiles 
 LINKER_FLAGS := -Wl,-T$(LINKER_LD)
 
-OFILE     := $(MAKEFILE_DIR)/module.pic.o
+BUILDDIR  := $(MAKEFILE_DIR)/build
+
+OFILE     := $(BUILDDIR)/module.pic.o
+INIFILE   := $(BUILDDIR)/module.ini
+BINFILE   := $(BUILDDIR)/module.bin
+
+READELF   := $(subst objcopy,readelf,$(OBJCOPY))
 
 $(TARGET) : $(SOURCES)		
+	mkdir -p $(BUILDDIR)
+	
 	$(CC) $(SOURCES) $(FLAGS) $(LINKER_FLAGS) -o $(OFILE)
-	@$(OBJCOPY) -O binary $(OFILE) $(TARGET)
-	# @hexdump -C $(TARGET)
+	@$(OBJCOPY) -O binary $(OFILE) $(BINFILE)
+	@# hexdump -C $(BINFILE)
+	
+	@# get .got section offset & length
+	@$(READELF) -S $(OFILE) | grep -E ".got" | tr -s ' ' | cut -d ' ' -f 6,8 | sed -E "s/([^\s]+)\s([^\s]+)/got_start\=\1\ngot_length\=\2/" > $(INIFILE)
+	
+	python $(PICEX_FIX) $(BINFILE) $(INIFILE) $(TARGET)
+	
+	@hexdump -C $(TARGET)
+	
+	@# cp $(BINFILE) $(TARGET)
+	
 	
